@@ -10,7 +10,7 @@ load_dotenv()
 
 # Setup database path and folder
 DB_FOLDER = os.getenv('DB_FOLDER', 'instance')
-DB_PATH = os.path.join(DB_FOLDER, 'requests.db')
+
 
 # Ensure the database folder exists
 if not os.path.exists(DB_FOLDER):
@@ -26,7 +26,11 @@ GEORGIA_TIMEZONE = pytz.timezone('Asia/Tbilisi')
 # Initialize the database
 def init_db():
     try:
-        conn = sqlite3.connect(DB_PATH)
+        if not os.path.exists('instance'):
+            os.makedirs('instance')
+
+
+        conn = sqlite3.connect('instance/requests.db')
         cursor = conn.cursor()
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS help_requests (
@@ -43,7 +47,7 @@ def init_db():
         ''')
         conn.commit()
         conn.close()
-        print(f"Database initialized at: {DB_PATH}")
+        print(f"Database initialized at")
     except Exception as e:
         print(f"Database initialization failed: {e}")
 
@@ -73,7 +77,7 @@ def submit_request():
     ip_address = request.remote_addr
     
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect('instance/requests.db')
         cursor = conn.cursor()
         cursor.execute('''
         INSERT INTO help_requests (name, contact, location, latitude, longitude, message, timestamp, ip_address)
@@ -96,7 +100,7 @@ def delete_request(request_id):
     ip_address = request.remote_addr
     
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect('instance/requests.db')
         cursor = conn.cursor()
         cursor.execute('DELETE FROM help_requests WHERE id = ? AND ip_address = ?', (request_id, ip_address))
         deleted = cursor.rowcount
@@ -114,7 +118,7 @@ def delete_request(request_id):
 def get_requests():
     """API endpoint to get all help requests"""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect('instance/requests.db')
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM help_requests ORDER BY timestamp DESC')
