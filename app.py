@@ -3,6 +3,9 @@ import sqlite3
 import os
 from datetime import datetime
 import pytz
+import pymysql
+pymysql.install_as_MySQLdb()
+
 
 app = Flask(__name__)
 
