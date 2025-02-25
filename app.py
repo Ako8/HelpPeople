@@ -42,7 +42,6 @@ def index():
 
 @app.route('/submit_request', methods=['POST'])
 def submit_request():
-    """Handle help request submission"""
     name = request.form.get('name')
     contact = request.form.get('contact')
     location = request.form.get('location')
@@ -50,20 +49,19 @@ def submit_request():
     longitude = request.form.get('longitude')
     message = request.form.get('message')
     
-    # Validate required fields
     if not all([name, contact, location, latitude, longitude, message]):
         return jsonify({"status": "error", "message": "All fields are required"}), 400
     
-    # Get current time in Georgian timezone
     now = datetime.now(GEORGIA_TIMEZONE)
     timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
+    ip_address = request.remote_addr
     
     conn = sqlite3.connect('instance/requests.db')
     cursor = conn.cursor()
     cursor.execute('''
-    INSERT INTO help_requests (name, contact, location, latitude, longitude, message, timestamp)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (name, contact, location, latitude, longitude, message, timestamp))
+    INSERT INTO help_requests (name, contact, location, latitude, longitude, message, timestamp, ip_address)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (name, contact, location, latitude, longitude, message, timestamp, ip_address))
     conn.commit()
     conn.close()
     
@@ -73,6 +71,22 @@ def submit_request():
 def view_requests():
     """Page to view all help requests"""
     return render_template('requests.html')
+
+@app.route('/delete_request/<int:request_id>', methods=['DELETE'])
+def delete_request(request_id):
+    ip_address = request.remote_addr
+    
+    conn = sqlite3.connect('instance/requests.db')
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM help_requests WHERE id = ? AND ip_address = ?', (request_id, ip_address))
+    deleted = cursor.rowcount
+    conn.commit()
+    conn.close()
+    
+    if deleted:
+        return jsonify({"status": "success", "message": "Request deleted successfully"})
+    else:
+        return jsonify({"status": "error", "message": "Request not found or not authorized to delete"}), 403
 
 @app.route('/api/requests')
 def get_requests():
@@ -87,4 +101,4 @@ def get_requests():
     return jsonify(requests)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+     app.run(host='0.0.0.0', port=5000)

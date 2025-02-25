@@ -136,6 +136,11 @@
                                     },${request.longitude}', '_blank')">
                                 მარშრუტის მიღება
                             </button>
+                            {{ request.id }}
+                            <button class="btn btn-danger btn-sm" onclick="deleteRequest(this)" data-id="{{ request.id }}">
+                              წაშლა
+                            </button>
+
                         </div>
                     </div>
                 </div>
@@ -232,4 +237,21 @@
     </div>
   </div>
 </div>
+<script>
+  function deleteRequest(button) {
+    const requestId = button.getAttribute("data-id");
+
+    if (requestId && confirm("Are you sure you want to delete this request?")) {
+      fetch(`/delete_request/${requestId}`, {
+        method: "DELETE",
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          alert(data.message);
+          loadRequests(); // Refresh request list
+        })
+        .catch((err) => console.error("Error:", err));
+    }
+  }
+</script>
 {% endblock %}
